@@ -1,0 +1,342 @@
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create index.html
+        run: |
+          cat > index.html <<'HTML_CONTENT'
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitTrack Pro - Fitness Takip</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    
+    <style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: linear-gradient(180deg, #111827 0%, #1F2937 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        .gradient-red {
+            background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+        }
+        
+        .gradient-orange {
+            background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+        }
+        
+        .gradient-dark {
+            background: linear-gradient(135deg, #1F2937 0%, #111827 100%);
+        }
+        
+        .card-glass {
+            background: rgba(31, 41, 55, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        .heartbeat {
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes heartbeat {
+            0%, 100% {
+                transform: scale(1);
+            }
+            25% {
+                transform: scale(1.1);
+            }
+            50% {
+                transform: scale(1);
+            }
+        }
+        
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+        
+        .nav-item.active {
+            color: #DC2626;
+        }
+        
+        .activity-card {
+            transition: all 0.3s ease;
+        }
+        
+        .activity-card:active {
+            transform: scale(0.98);
+        }
+        
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .section {
+            display: none;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        .timer-display {
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum";
+        }
+        
+        .activity-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .metric-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-20">
+
+    <!-- Dashboard Section -->
+    <section id="dashboard" class="section active px-6 pt-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-white">Merhaba!</h1>
+                <p class="text-gray-400 text-sm">Bugün harika görünüyorsun</p>
+            </div>
+            <img src="https://memory.tanka.ai/JhjjQMrc26_yPsI1W2E8P" alt="Profil" class="w-12 h-12 rounded-full border-2 border-red-600">
+        </div>
+        
+        <!-- Daily Stats Grid -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="card-glass rounded-2xl p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <i data-lucide="footprints" class="w-5 h-5 text-orange-500"></i>
+                    <span class="text-xs text-gray-400">Hedef: 10K</span>
+                </div>
+                <div class="text-3xl font-bold text-white mb-1" id="dashboardSteps">7,842</div>
+                <div class="text-xs text-gray-400">Adım</div>
+                <div class="mt-2 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full gradient-orange" style="width: 78%" id="dashboardStepsProgress"></div>
+                </div>
+            </div>
+            
+            <div class="card-glass rounded-2xl p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <i data-lucide="flame" class="w-5 h-5 text-red-600"></i>
+                    <span class="text-xs text-gray-400">Hedef: 500</span>
+                </div>
+                <div class="text-3xl font-bold text-white mb-1" id="dashboardCalories">342</div>
+                <div class="text-xs text-gray-400">Kalori</div>
+                <div class="mt-2 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full gradient-red" style="width: 68%" id="dashboardCaloriesProgress"></div>
+                </div>
+            </div>
+            
+            <div class="card-glass rounded-2xl p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <i data-lucide="map-pin" class="w-5 h-5 text-blue-500"></i>
+                    <span class="text-xs text-gray-400">GPS</span>
+                </div>
+                <div class="text-3xl font-bold text-white mb-1" id="dashboardDistance">5.2</div>
+                <div class="text-xs text-gray-400">Kilometre</div>
+            </div>
+            
+            <div class="card-glass rounded-2xl p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <i data-lucide="clock" class="w-5 h-5 text-green-500"></i>
+                    <span class="text-xs text-gray-400">Bugün</span>
+                </div>
+                <div class="text-3xl font-bold text-white mb-1" id="dashboardDuration">42</div>
+                <div class="text-xs text-gray-400">Dakika</div>
+            </div>
+        </div>
+        
+        <!-- EKG & Blood Pressure Quick Access -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <button class="gradient-red rounded-2xl p-4 text-left activity-card" onclick="showSection('newWorkout'); document.getElementById('ekgMeasurement').click();">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i data-lucide="activity" class="w-5 h-5 text-white heartbeat"></i>
+                    </div>
+                    <div>
+                        <div class="text-white font-semibold">EKG</div>
+                        <div class="text-white/70 text-xs">Ölçüm Yap</div>
+                    </div>
+                </div>
+                <div class="text-2xl font-bold text-white" id="dashboardEkg">72 bpm</div>
+            </button>
+            
+            <button class="gradient-red rounded-2xl p-4 text-left activity-card" onclick="showSection('newWorkout'); document.getElementById('bpMeasurement').click();">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i data-lucide="heart-pulse" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div>
+                        <div class="text-white font-semibold">Tansiyon</div>
+                        <div class="text-white/70 text-xs">Ölçüm Yap</div>
+                    </div>
+                </div>
+                <div class="text-lg font-bold text-white" id="dashboardBp">120/80</div>
+            </button>
+        </div>
+        
+        <!-- Last Workout -->
+        <div class="card-glass rounded-2xl p-4 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-white font-semibold">Son Antrenman</h3>
+                <span class="text-xs text-gray-400">2 saat önce</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <img src="https://memory.tanka.ai/loxP5nF0THKk7zwEop4nr" alt="Koşu" class="w-20 h-20 rounded-xl object-cover">
+                <div class="flex-1">
+                    <div class="text-white font-semibold mb-1">Sabah Koşusu</div>
+                    <div class="flex items-center gap-4 text-sm text-gray-400">
+                        <span class="flex items-center gap-1">
+                            <i data-lucide="clock" class="w-4 h-4"></i>
+                            32 dk
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                            4.8 km
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <i data-lucide="flame" class="w-4 h-4"></i>
+                            245 kcal
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Weekly Progress Chart -->
+        <div class="card-glass rounded-2xl p-4 mb-6">
+            <h3 class="text-white font-semibold mb-4">Haftalık İlerleme</h3>
+            <div id="weeklyChart" style="height: 180px;"></div>
+        </div>
+        
+        <!-- Quick Start Buttons -->
+        <div class="mb-6">
+            <h3 class="text-white font-semibold mb-4">Hızlı Başlat</h3>
+            <div class="grid grid-cols-3 gap-3">
+                <button class="card-glass rounded-2xl p-4 text-center activity-card" onclick="startQuickWorkout('running')">
+                    <div class="w-12 h-12 gradient-orange rounded-xl flex items-center justify-center mx-auto mb-2">
+                        <i data-lucide="footprints" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div class="text-white text-sm font-medium">Koşu</div>
+                </button>
+                
+                <button class="card-glass rounded-2xl p-4 text-center activity-card" onclick="startQuickWorkout('walking')">
+                    <div class="w-12 h-12 gradient-orange rounded-xl flex items-center justify-center mx-auto mb-2">
+                        <i data-lucide="person-standing" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div class="text-white text-sm font-medium">Yürüyüş</div>
+                </button>
+                
+                <button class="card-glass rounded-2xl p-4 text-center activity-card" onclick="startQuickWorkout('cycling')">
+                    <div class="w-12 h-12 gradient-orange rounded-xl flex items-center justify-center mx-auto mb-2">
+                        <i data-lucide="bike" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div class="text-white text-sm font-medium">Bisiklet</div>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- New Workout Section -->
+    <section id="newWorkout" class="section px-6 pt-6">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-white">Yeni Antrenman</h1>
+            <button class="w-10 h-10 card-glass rounded-xl flex items-center justify-center" onclick="showSection('dashboard')">
+                <i data-lucide="x" class="w-5 h-5 text-white"></i>
+            </button>
+        </div>
+        
+        <!-- Activity Type Selection -->
+        <div class="mb-6">
+            <h3 class="text-white font-semibold mb-3">Aktivite Tipi</h3>
+            <div class="grid grid-cols-3 gap-3 mb-3">
+                <button class="activity-type-btn card-glass rounded-xl p-3 text-center" data-activity="running">
+                    <i data-lucide="footprints" class="w-6 h-6 text-orange-500 mx-auto mb-1"></i>
+                    <div class="text-white text-xs">Koşu</div>
+                </button>
+                <button class="activity-type-btn card-glass rounded-xl p-3 text-center" data-activity="walking">
+                    <i data-lucide="person-standing" class="w-6 h-6 text-blue-500 mx-auto mb-1"></i>
+                    <div class="text-white text-xs">Yürüyüş</div>
+                </button>
+                <button class="activity-type-btn card-glass rounded-xl p-3 text-center" data-activity="cycling">
+                    <i data-lucide="bike" class="w-6 h-6 text-green-500 mx-auto mb-1"></i>
+                    <div class="text-white text-xs">Bisiklet</div>
+                </button>
+                <button class="activity-type-btn card-glass rounded-xl p-3 text-center" data-activity="gym">
+                    <i data-lucide="dumbbell" class="w-6 h-6 text-purple-500 mx-auto mb-1"></i>
+                    <div class="text-white text-xs">Fitness</div>
+                </button>
+                <button class="activity-type-btn card-glass rounded-xl p-3 text-center" data-activity="yoga">
+                    <i data-lucide="heart" class="w-6 h-6 text-pink-500 mx-auto mb-1"></i>
+                    <div class="text-white text-xs">Yoga</div>
+                </button>
+                <button class="activity-type-btn card-glass rounded-xl p-3 text-center" data-activity="swimming">
+                    <i data-lucide="waves" class="w-6 h-6 text-cyan-500 mx-auto mb-1"></i>
+                    <div class="text-white text-xs">Yüzme</div>
+                </button>
+                <button class="activity-type-btn card-glass rounded-xl p-3 text-center" data-activity="pilates">
+                    <i data-lucide="stretch-horizontal" class="
+HTML_CONTENT
+      - name: Commit and push
+        env:
+          GIT_COMMITTER_NAME: "github-actions[bot]"
+          GIT_COMMITTER_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Add FitTrack Pro page (index.html) via workflow" || echo "no changes to commit"
+          git push origin HEAD:main
