@@ -8,14 +8,15 @@ Kurulum:
 2. İlgili dizine gir:
    cd Fitness1
 
-GitHub Pages:
-Bu repo için basit bir index.html ekledim. Pages'ı etkinleştirmek için:
-1. Repo > Settings > Pages
-2. Branch: main, Folder: / (root) seç ve Save
-3. Birkaç dakika sonra site yayına geçer: https://piyamip.github.io/Fitness1/
+Hızlı Başlangıç:
+- index.html dosyası GitHub Pages için eklendi. Siteyi açmak için Settings → Pages → Branch: main, Folder: / (root) seçin.
+
+İçerik:
+- README.md — proje açıklaması
+- index.html — basit ana sayfa
 
 Lisans:
-(TBD) MIT önerilir.
+Bu proje MIT Lisansı ile lisanslanmıştır. Detaylar LICENSE dosyasında.
 
 Katkıda bulunma:
-PR veya issue açabilirsin.
+PR ve issue'lar hoş karşılanır. Lütfen öncelikle bir issue açıp ne yapmak istediğini yaz.
